@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Avron OS V4 Preview</title>
+<style>
+:root{
+  --bg:#05070a; --panel:#10151b; --panel2:#171e27; --line:#2a3440;
+  --text:#e7edf5; --muted:#91a0b1; --blue:#79b7df; --blue2:#2d6d9b;
+  --green:#64d98f; --amber:#e1c56b; --red:#ef7a7a;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#000;color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+button,input,textarea{font:inherit}
+.hidden{display:none!important}
+.screen{position:fixed;inset:0}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px #6da9d455)}50%{filter:drop-shadow(0 0 18px #6da9d4aa)}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes progress{from{width:0}to{width:100%}}
+.fade{animation:fade .45s ease both}
+
+/* 404 */
+#gate{display:grid;place-items:center;background:#020202;z-index:100}
+#gate .err{text-align:center;color:#bdbdbd;user-select:none}
+#gate .code{font-size:96px;font-weight:200;letter-spacing:4px;line-height:1}
+#gate .title{font-size:24px;margin-top:13px}
+#gate .sub{font-size:12px;color:#5e5e5e;margin-top:8px}
+#hotspot{position:absolute;right:0;bottom:0;width:82px;height:82px;border:0;background:transparent;outline:0;color:transparent}
+
+/* dialog */
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:#000c;z-index:110;padding:22px}
+.dialog{width:min(520px,94vw);background:#0f141a;border:1px solid #465364;box-shadow:0 28px 90px #000c}
+.dialog-h{padding:12px 14px;background:#1b232d;border-bottom:1px solid #303a46;font-weight:700}
+.dialog-b{padding:18px}
+.label{font-size:12px;color:#9eabba;margin-bottom:7px}
+.field{width:100%;padding:12px 13px;background:#070a0e;color:white;border:1px solid #3c4855;outline:none}
+.btn{padding:10px 14px;background:#1b2530;color:white;border:1px solid #485563}
+.btn.primary{background:linear-gradient(145deg,var(--blue),var(--blue2));border-color:#8bc2e8;
+box-shadow:inset 0 1px #e3f3ff,0 0 18px #4c90c955}
+.note{font-size:12px;color:#8c9aaa;line-height:1.55;margin-top:11px}
+.errmsg{color:#ef8a8a;font-size:12px;margin-top:9px}
+
+/* verification */
+#verify{background:#05070a;z-index:90;display:grid;place-items:center;padding:18px}
+.verify-card{width:min(760px,95vw);border:1px solid #2b3743;background:#0b1016}
+.verify-title{padding:16px 18px;border-bottom:1px solid #293440;display:flex;justify-content:space-between}
+.verify-title b{letter-spacing:.7px}
+.verify-title span{font-size:11px;color:#84bde5}
+.checks{padding:18px;display:grid;gap:9px}
+.check{display:grid;grid-template-columns:24px 1fr auto;align-items:center;padding:9px 10px;background:#0e151c;border:1px solid #1f2a35}
+.dot{width:10px;height:10px;border-radius:50%;background:#394654}
+.check.active .dot{background:var(--amber);box-shadow:0 0 10px #e1c56b66}
+.check.ok .dot{background:var(--green);box-shadow:0 0 10px #64d98f66}
+.check .state{font-size:11px;color:#8ea0b1}
+.verify-foot{padding:12px 18px;border-top:1px solid #293440;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#98a7b6}
+
+/* terminal */
+#terminalScreen{background:#020506;z-index:80;overflow:hidden}
+.term-shell{height:100%;display:grid;grid-template-rows:36px 1fr 50px}
+.term-top{display:flex;align-items:center;padding:0 12px;background:#10161b;border-bottom:1px solid #26323c;
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.term-top .badge{margin-left:auto;color:#71b8e8}
+.term-output{overflow:auto;padding:14px 16px 40px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+font-size:12px;line-height:1.5;white-space:pre-wrap;color:#d7e0e8}
+.term-line{min-height:18px}
+.dim{color:#697887}.ok{color:#65d990}.warn{color:#e0c368}.info{color:#73b5df}.bad{color:#ec8080}
+.promptbar{display:flex;align-items:center;gap:9px;padding:8px 12px;background:#07100b;border-top:1px solid #1d3a2a;
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.promptbar span{color:#70e1a0;white-space:nowrap}
+#cmd{flex:1;background:transparent;border:0;outline:0;color:#fff;font-family:inherit}
+
+/* challenge */
+#challenge{z-index:75;background:#020406;display:grid;place-items:center;padding:20px}
+.challenge-card{width:min(520px,92vw);background:#0c1218;border:1px solid #34414e}
+.challenge-card .head{padding:14px 16px;border-bottom:1px solid #2d3945;font-family:ui-monospace,Menlo,monospace}
+.challenge-card .body{padding:20px}
+.question{font-size:22px;margin:8px 0 18px}
+
+/* logo */
+#logoScreen{z-index:70;background:#000;display:grid;place-items:center}
+.logo-wrap{text-align:center;width:min(540px,80vw)}
+.wordmark{font-size:54px;font-weight:650;letter-spacing:9px;color:#f4f8fb;animation:glow 2.2s ease-in-out infinite}
+.tag{font-size:11px;color:#6e8294;letter-spacing:3px;margin-top:10px}
+.bar{height:4px;background:#15191e;border-radius:4px;margin-top:36px;overflow:hidden;border:1px solid #272f38}
+.bar>div{height:100%;width:0;background:linear-gradient(90deg,#d6efff,#7eb8df,#2d6c99);border-radius:4px}
+.bootmsg{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#718292;margin-top:12px}
+
+/* Explorer */
+#app{z-index:50;background:#080b0f;display:grid;grid-template-rows:34px 42px 1fr 30px}
+.menu{display:flex;align-items:center;gap:3px;padding:0 8px;background:#11161c;border-bottom:1px solid var(--line)}
+.brand{font-weight:750;letter-spacing:.6px;margin-right:9px}
+.pill{font-size:9px;padding:2px 5px;border:1px solid #675a27;color:#d5c16e}
+.menu button,.toolbar button{background:transparent;color:var(--text);border:0;padding:6px 9px}
+.menu button:hover,.toolbar button:hover{background:#202934}
+.toolbar{display:flex;align-items:center;gap:5px;padding:5px 8px;background:#0f1419;border-bottom:1px solid var(--line)}
+.addr{flex:1;background:#080c10;color:#eaf1f7;border:1px solid #374350;padding:6px 8px}
+.workspace{display:grid;grid-template-columns:245px 1fr 285px;min-height:0}
+.tree,.inspector{background:#0f141a;overflow:auto}
+.tree{border-right:1px solid var(--line)}
+.inspector{border-left:1px solid var(--line)}
+.paneh{padding:8px 10px;background:#161d24;border-bottom:1px solid var(--line);font-weight:700}
+.node{padding:7px 10px;white-space:nowrap;cursor:pointer}
+.node:hover,.node.sel{background:#1d3349}
+.main{overflow:auto;background:#0b1015}
+.tabs{height:34px;display:flex;align-items:end;background:#141a21;border-bottom:1px solid var(--line)}
+.tab{padding:8px 13px;background:#202832;border-right:1px solid var(--line)}
+.head,.row{display:grid;grid-template-columns:minmax(230px,2fr) 110px 90px 130px 100px}
+.head{position:sticky;top:0;background:#182029;color:#a9b5c1;border-bottom:1px solid var(--line);z-index:2}
+.head div,.row div{padding:8px;border-right:1px solid #252d36;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row{background:#0e141a;border-bottom:1px solid #1d252e;cursor:pointer}
+.row:nth-child(even){background:#111820}.row:hover{background:#192737}
+.status{display:flex;align-items:center;gap:18px;padding:0 9px;border-top:1px solid var(--line);background:#10151a;font-size:11px;color:#a8b4bf}
+.status .right{margin-left:auto}.owner{color:#7bd39a}.locked{color:#e3c36d}
+.detail{padding:12px;line-height:1.55;font-size:12px}
+.detail table{width:100%;border-collapse:collapse}
+.detail td{padding:6px;border-bottom:1px solid #232c36}.detail td:first-child{color:#8e9cab}
+
+/* Cyrus */
+#cyrus{position:fixed;right:0;top:0;bottom:0;width:min(440px,94vw);background:#10161d;border-left:1px solid #41505f;
+z-index:65;display:grid;grid-template-rows:42px 1fr auto}
+.cyh{padding:11px 12px;background:#1d2630;font-weight:750}
+.cyh button{float:right;background:transparent;color:white;border:0;font-size:18px}
+.msgs{overflow:auto;padding:12px}
+.msg{padding:9px 10px;background:#18212a;border:1px solid #2b3742;margin-bottom:9px;font-size:13px}
+.composer{display:flex;gap:8px;align-items:end;padding:10px;border-top:1px solid var(--line);background:#0d1217}
+.plus,.send{width:38px;height:38px;border-radius:50%;border:1px solid #495866;color:white}
+.plus{background:#1a232c}.send{background:linear-gradient(145deg,#94c8e8,#2d6f9f);box-shadow:inset 0 1px #e4f5ff,0 0 15px #4a8fc855}
+.composer textarea{flex:1;min-height:54px;max-height:140px;resize:vertical;background:#080d12;color:white;border:1px solid #3e4b58;padding:10px;border-radius:14px}
+
+/* Quick terminal */
+#quickTerm{position:fixed;left:245px;right:285px;bottom:30px;background:#06100b;border-top:1px solid #1f4b31;
+z-index:60;font-family:ui-monospace,Menlo,monospace}
+.qtbar{display:flex;align-items:center;padding:7px 10px;gap:8px}
+.qtbar span{color:#70e1a0}.qtbar input{flex:1;background:transparent;border:0;outline:0;color:white;font-family:inherit}
+.qtstatus{padding:4px 10px;border-top:1px solid #153823;color:#7f9488;font-size:10px}
+
+@media(max-width:920px){
+  .workspace{grid-template-columns:210px 1fr}.inspector{display:none}
+  #quickTerm{left:210px;right:0}
+}
+@media(max-width:700px){
+  .workspace{grid-template-columns:170px 1fr}
+  #quickTerm{left:170px}
+  .head,.row{grid-template-columns:minmax(180px,2fr) 90px 80px 110px}
+  .hide-mobile{display:none}
+}
+</style>
+</head>
+<body>
+
+<section id="gate" class="screen">
+  <div class="err">
+    <div class="code">404</div>
+    <div class="title">Not Found</div>
+    <div class="sub">The requested resource could not be found.</div>
+  </div>
+  <button id="hotspot" aria-label=""></button>
+</section>
+
+<div id="pinOverlay" class="overlay hidden">
+  <div class="dialog">
+    <div class="dialog-h">AVRON SECURE ACCESS</div>
+    <div class="dialog-b">
+      <div class="label">Owner access code</div>
+      <input id="pin" class="field" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter access PIN">
+      <button class="btn primary" id="pinBtn" style="margin-top:12px">Continue</button>
+      <div id="pinErr" class="errmsg"></div>
+      <div class="note">Public preview only: no real production PIN is embedded here. Any non-empty value continues the demo.</div>
+    </div>
+  </div>
+</div>
+
+<section id="verify" class="screen hidden">
+  <div class="verify-card">
+    <div class="verify-title"><b>AVRON SECURE LOGIN</b><span>IDENTITY VERIFICATION</span></div>
+    <div class="checks" id="checks"></div>
+    <div class="verify-foot" id="verifyFoot">Initializing secure session...</div>
+  </div>
+</section>
+
+<section id="terminalScreen" class="screen hidden">
+  <div class="term-shell">
+    <div class="term-top">
+      AVRON TERMINAL <span class="dim">&nbsp;• owner workspace</span>
+      <span class="badge" id="termStage">PRE-BOOT</span>
+    </div>
+    <div class="term-output" id="termOut"></div>
+    <div class="promptbar">
+      <span>root@avron:~#</span>
+      <input id="cmd" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </div>
+</section>
+
+<section id="challenge" class="screen hidden">
+  <div class="challenge-card">
+    <div class="head">OWNER CHALLENGE // FINAL AUTHORIZATION</div>
+    <div class="body">
+      <div class="label">Production will use a server-side verifier. This public preview accepts any non-empty response.</div>
+      <div class="question">Owner verification response:</div>
+      <input id="challengeInput" class="field" type="password" autocomplete="off">
+      <button class="btn primary" id="challengeBtn" style="margin-top:12px">Authorize</button>
+      <div id="challengeErr" class="errmsg"></div>
+    </div>
+  </div>
+</section>
+
+<section id="logoScreen" class="screen hidden">
+  <div class="logo-wrap">
+    <div class="wordmark">AVRON OS</div>
+    <div class="tag">INTELLIGENT OPERATING ENVIRONMENT</div>
+    <div class="bar"><div id="logoBar"></div></div>
+    <div class="bootmsg" id="logoMsg">Preparing shell...</div>
+  </div>
+</section>
+
+<section id="app" class="screen hidden">
+  <div class="menu">
+    <div class="brand">AVRON OS V4 <span class="pill">PUBLIC PREVIEW</span></div>
+    <button>File</button><button>Edit</button><button>View</button><button>Tools</button><button>Help</button>
+  </div>
+  <div class="toolbar">
+    <button>←</button><button>↑</button>
+    <input id="addr" class="addr" value="AVRON:\Files">
+    <button id="cyrusBtn">Cyrus</button>
+  </div>
+  <div class="workspace">
+    <aside class="tree"><div class="paneh">Folders</div><div id="tree"></div></aside>
+    <main class="main">
+      <div class="tabs"><div class="tab">Explorer</div><div class="tab">Database Manager</div><div class="tab">Security Center</div></div>
+      <div class="head"><div>Name</div><div>Type</div><div>Size</div><div>Security</div><div class="hide-mobile">Status</div></div>
+      <div id="list"></div>
+    </main>
+    <aside class="inspector"><div class="paneh">Details</div><div id="detail" class="detail">Select an item.</div></aside>
+  </div>
+  <div class="status">
+    <span>DB: <b class="owner">PREVIEW</b></span>
+    <span>CYRUS: <b class="owner">DEMO</b></span>
+    <span>FIREWALL: <b class="owner">ACTIVE</b></span>
+    <span>OWNER SESSION: <b class="owner">ACTIVE</b></span>
+    <span class="right">V4.0 PREVIEW</span>
+  </div>
+</section>
+
+<div id="quickTerm" class="hidden">
+  <div class="qtbar"><span>root@avron:~#</span><input id="qt" placeholder="status • cyrus • diagnostics • T"></div>
+  <div class="qtstatus">Database: CONNECTED • Cyrus: DEMO • Session: PREVIEW</div>
+</div>
+
+<aside id="cyrus" class="hidden">
+  <div class="cyh">Cyrus <button id="closeCyrus">×</button></div>
+  <div id="msgs" class="msgs">
+    <div class="msg">Cyrus preview ready. Attachments, file context, live-edit concepts, and operator workflows are represented here without production permissions.</div>
+  </div>
+  <div class="composer">
+    <button class="plus" id="plusBtn">＋</button>
+    <textarea id="ask" placeholder="Ask Cyrus anything..."></textarea>
+    <button class="send" id="sendBtn">➜</button>
+  </div>
+</aside>
+
+<script>
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+const verifyChecks=[
+  "Credentials accepted","Account state","Trusted device","Session signature",
+  "Access policy","Session expiration","Owner permissions","Recovery state"
+];
+const securityInit=[
+  "Encryption Manager","Session Manager","Recovery Manager","AI Firewall","Network Firewall",
+  "Integrity Monitor","Audit Service","Device Trust","Protected Objects"
+];
+const bootLines=[
+"[    0.000000] AVRON kernel bridge initialized",
+"[    0.013371] entropy: owner session pool ready",
+"[    0.048102] mounting virtual workspace AVRON:\\",
+"[    0.061221] mount: AVRON:\\Files .............. ok",
+"[    0.073908] mount: AVRON:\\Projects ........... ok",
+"[    0.086512] mount: AVRON:\\Secure ............. protected",
+"[    0.095400] mount: AVRON:\\Avron Systems ...... owner-only",
+"[    0.107988] systemctl start avron-sessiond",
+"[    0.120443] systemctl start avron-integrityd",
+"[    0.131008] systemctl start avron-auditd",
+"[    0.149220] systemctl start avron-firewalld",
+"[    0.159877] avronctl policy load --owner",
+"[    0.171122] policy: destructive-db ............ DENY",
+"[    0.179033] policy: auth-bypass ................ DENY",
+"[    0.185443] policy: audit-delete ............... DENY",
+"[    0.194211] policy: ai-self-escalation ......... DENY",
+"[    0.208339] storage.index verify",
+"[    0.224119] storage.index status ............... healthy",
+"[    0.237645] recovery containers scan ........... clean",
+"[    0.249880] snapshots load ...................... ready",
+"[    0.262019] workspace state restore ............. ok",
+"[    0.278144] ui compositor initialize ............ ok",
+"[    0.291103] explorer tree hydrate ............... ok",
+"[    0.307740] breadcrumb registry ................. ok",
+"[    0.319012] file operation journal .............. ready",
+"[    0.332590] conflict center ..................... ready",
+"[    0.348203] version store ....................... ready",
+"[    0.359842] backup metadata ..................... verified",
+"[    0.371112] diagnostics bus ..................... online",
+"[    0.389976] tor-risk provider ................... unknown",
+"[    0.401111] network policy ...................... active",
+"[    0.413792] device trust ........................ accepted",
+"[    0.429008] session expiry source ............... server",
+"[    0.441006] local decrypted cache ............... empty",
+"[    0.454402] cyrus runtime handshake",
+"[    0.466610] cyrus firewall ...................... active",
+"[    0.477720] cyrus permissions ................... loaded",
+"[    0.490433] cyrus secure context ................ isolated",
+"[    0.508991] cyrus operator tools ................ restricted",
+"[    0.522720] cyrus live-edit engine .............. ready",
+"[    0.534000] cyrus terminal copilot .............. ready",
+"[    0.548212] cyrus debugger ...................... observe",
+"[    0.562130] semantic index ...................... ready",
+"[    0.579991] integrity chain ..................... verified",
+"[    0.594302] task manager ........................ ready",
+"[    0.609981] operation queue ..................... empty",
+"[    0.623101] notifications ....................... 0 critical",
+"[    0.639443] system health ....................... nominal",
+"[    0.651820] avronctl workspace owner --attach",
+"[    0.664212] shell privileges .................... OWNER",
+"[    0.677880] compositor handoff .................. staged",
+"[    0.690333] secure challenge .................... pending",
+"[    0.704881] launch sequence checkpoint .......... committed",
+"[    0.719991] final authorization gate ............ waiting"
+];
+
+const folders=[
+  "Quick Access","Files","Projects","Secure","Avron Systems","Shared",
+  "Database","AI","Recovery","System"
+];
+
+const contents={
+"Files":[
+["Documents","Folder","—","Owner","Ready"],["Media","Folder","—","Owner","Ready"],
+["Notes.avron","Avron Note","18 KB","Owner","Verified"],["Project Index.avron","Avron File","62 KB","Owner","Verified"]
+],
+"Projects":[
+["Energy Assault","Project Folder","—","Owner","Ready"],["Archive","Folder","—","Owner","Ready"]
+],
+"Secure":[
+["Owner Records","Secure Folder","—","Owner Only","Locked"],["Encrypted Notes","Secure Folder","—","Owner Only","Locked"]
+],
+"Avron Systems":[
+["01_System_Architecture.avron","System Spec","44 KB","Owner Only","Protected"],
+["02_Cyrus_AI.avron","System Spec","51 KB","Owner Only","Protected"],
+["03_Terminal.avron","System Spec","38 KB","Owner Only","Protected"],
+["04_Authentication_Sessions.avron","System Spec","57 KB","Owner Only","Protected"],
+["05_Recovery.avron","System Spec","49 KB","Owner Only","Protected"],
+["06_Database_Manager.avron","System Spec","41 KB","Owner Only","Protected"],
+["07_Encryption_Backups.avron","System Spec","39 KB","Owner Only","Protected"],
+["08_System_Health.avron","System Spec","31 KB","Owner Only","Protected"],
+["09_UI_iPad.avron","System Spec","33 KB","Owner Only","Protected"],
+["10_Boot_Sequence.avron","System Spec","46 KB","Owner Only","Protected"],
+["11_Bug_Fix_Register.avron","System Spec","72 KB","Owner Only","Protected"],
+["12_Deployment_Safety.avron","System Spec","36 KB","Owner Only","Protected"]
+],
+"Database":[
+["Tables","Database Node","—","Owner","Connected"],["Storage","Database Node","—","Owner","Connected"],
+["Authentication","Database Node","—","Owner","Connected"],["Functions","Database Node","—","Owner","Connected"]
+],
+"AI":[
+["Cyrus Assistant","AI Service","—","Restricted","Demo"],["AI Firewall","Security Service","—","Owner Only","Active"]
+],
+"Recovery":[
+["Recycle Bin","Recovery Folder","—","Owner","Ready"],["Restore Points","Recovery Store","—","Owner Only","Ready"],
+["Bulk Delete Recovery","Recovery Store","—","Owner Only","Ready"]
+],
+"System":[
+["Security Center","System Tool","—","Owner Only","Active"],["Device Manager","System Tool","—","Owner Only","Active"],
+["Session Manager","System Tool","—","Owner Only","Active"],["Diagnostics","System Tool","—","Owner","Ready"]
+]
+};
+
+let stage=0, currentFolder="Files";
+
+function term(text,cls=""){
+  const d=document.createElement("div");
+  d.className="term-line "+cls;
+  d.textContent=text;
+  $("termOut").appendChild(d);
+  $("termOut").scrollTop=$("termOut").scrollHeight;
+}
+
+$("hotspot").onclick=()=>$("pinOverlay").classList.remove("hidden");
+$("pinBtn").onclick=startLogin;
+$("pin").addEventListener("keydown",e=>{if(e.key==="Enter")startLogin();});
+
+async function startLogin(){
+  if(!$("pin").value.trim()){ $("pinErr").textContent="Enter a preview access value."; return; }
+  $("pinOverlay").classList.add("hidden");
+  $("gate").classList.add("hidden");
+  $("verify").classList.remove("hidden");
+  $("checks").innerHTML=verifyChecks.map((x,i)=>`<div class="check" id="check${i}"><span class="dot"></span><span>${x}</span><span class="state">WAITING</span></div>`).join("");
+  for(let i=0;i<verifyChecks.length;i++){
+    const row=$("check"+i),state=row.querySelector(".state");
+    row.classList.add("active");state.textContent="CHECKING";
+    $("verifyFoot").textContent=`verifying ${verifyChecks[i].toLowerCase()}...`;
+    await sleep(330);
+    row.classList.remove("active");row.classList.add("ok");state.textContent="PASS";
+  }
+  $("verifyFoot").textContent="Identity verified. Initializing security services...";
+  await sleep(420);
+  for(const item of securityInit){
+    $("verifyFoot").textContent=`starting ${item.toLowerCase()}...`;
+    await sleep(150);
+  }
+  $("verifyFoot").textContent="Secure session created. Handing off to terminal.";
+  await sleep(650);
+  $("verify").classList.add("hidden");
+  $("terminalScreen").classList.remove("hidden");
+  $("termStage").textContent="MANUAL GATE 1";
+  term("AVRON OS V4 // SECURE OWNER BOOT","info");
+  term("Session state: ACTIVE","ok");
+  term("Workspace mount: STAGED","dim");
+  term("Manual owner shell gate required.","warn");
+  term("");
+  stage=1;
+  $("cmd").disabled=false;
+  $("cmd").focus();
+}
+
+$("cmd").addEventListener("keydown",async e=>{
+  if(e.key!=="Enter")return;
+  const v=$("cmd").value.trim();
+  $("cmd").value="";
+  term(`root@avron:~# ${v}`);
+  if(stage===1){
+    if(v==="startx --workspace owner") await runCyrusInit();
+    else term(`bash: ${v.split(" ")[0]||"command"}: command not found`,"bad");
+  }else if(stage===2){
+    if(v==="launch averon_os") await runChaoticBoot();
+    else term(`avron-shell: ${v.split(" ")[0]||"command"}: invalid owner command`,"bad");
+  }
+});
+
+async function runCyrusInit(){
+  stage=0;$("cmd").disabled=true;$("termStage").textContent="CYRUS INIT";
+  term("");term("CYRUS SYSTEM INTELLIGENCE","info");
+  const lines=[
+    ["Language Engine","ONLINE"],["Vault Context Engine","ONLINE"],["File Intelligence","ONLINE"],
+    ["Terminal Copilot","ONLINE"],["Live Edit Engine","ONLINE"],["Operator Tools","RESTRICTED"],
+    ["Developer Sandbox","READY"],["Autonomous Debugger","ACTIVE"]
+  ];
+  for(const [a,b] of lines){
+    await sleep(230);
+    term(`${a.padEnd(28,".")} ${b}`,b==="RESTRICTED"?"warn":"ok");
+  }
+  await sleep(250);
+  term("Loading Cyrus permissions...");
+  term("  owner-defined boundaries .......... loaded","dim");
+  term("  AI firewall rules ................ active","dim");
+  term("  restricted operations ............ enforced","dim");
+  term("  command registry ................. ready","dim");
+  await sleep(380);
+  term("CYRUS ONLINE","ok");
+  term("AI authority: ASK • ASSIST • LIVE EDIT • OPERATOR","info");
+  term("Protected operations require authorization.","warn");
+  term("");
+  term("AVRON OS V4 // OWNER SESSION ACTIVE","ok");
+  term("Manual launch gate required.","warn");
+  $("termStage").textContent="MANUAL GATE 2";
+  stage=2;$("cmd").disabled=false;$("cmd").focus();
+}
+
+async function runChaoticBoot(){
+  stage=0;$("cmd").disabled=true;$("termStage").textContent="BOOTSTRAP";
+  term("");term("launching AVRON OS...","info");
+  for(const line of bootLines){
+    let cls="";
+    if(line.includes("DENY")||line.includes("unknown")) cls="warn";
+    else if(line.includes("ok")||line.includes("ready")||line.includes("verified")||line.includes("nominal")||line.includes("active")) cls="ok";
+    term(line,cls);
+    await sleep(65+Math.random()*45);
+  }
+  term("");term("root@avron:~# welcome back Christian","info");
+  term("OWNER SESSION PREPARED","ok");
+  term("CYRUS ONLINE","ok");
+  term("FINAL CHALLENGE REQUIRED","warn");
+  await sleep(700);
+  $("terminalScreen").classList.add("hidden");
+  $("challenge").classList.remove("hidden");
+  $("challengeInput").focus();
+}
+
+$("challengeBtn").onclick=finishChallenge;
+$("challengeInput").addEventListener("keydown",e=>{if(e.key==="Enter")finishChallenge();});
+
+async function finishChallenge(){
+  if(!$("challengeInput").value.trim()){ $("challengeErr").textContent="Enter a preview response.";return; }
+  $("challenge").classList.add("hidden");
+  $("logoScreen").classList.remove("hidden");
+  $("logoBar").style.animation="progress 4.9s cubic-bezier(.22,.68,.33,1) forwards";
+  const msgs=["Preparing shell...","Restoring workspace...","Validating security state...","Starting Cyrus...","Loading Explorer..."];
+  for(const msg of msgs){$("logoMsg").textContent=msg;await sleep(900);}
+  await sleep(450);
+  $("logoScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("quickTerm").classList.remove("hidden");
+  renderTree();
+  openFolder("Files");
+}
+
+function renderTree(){
+  $("tree").innerHTML=folders.map(f=>`<div class="node ${f===currentFolder?"sel":""}" data-folder="${f}">▸ ${f}</div>`).join("");
+  document.querySelectorAll(".node").forEach(n=>n.onclick=()=>openFolder(n.dataset.folder));
+}
+
+function openFolder(name){
+  currentFolder=name;
+  $("addr").value=`AVRON:\\${name}`;
+  renderTree();
+  const rows=contents[name]||[
+    ["System Overview","Virtual Object","—","Owner","Ready"],
+    ["No preview items","Placeholder","—","—","—"]
+  ];
+  $("list").innerHTML=rows.map((r,i)=>`<div class="row" data-index="${i}">
+    <div>${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div><div>${r[3]}</div><div class="hide-mobile">${r[4]}</div>
+  </div>`).join("");
+  document.querySelectorAll(".row").forEach((row,i)=>row.onclick=()=>showDetail(rows[i]));
+  $("detail").innerHTML=`<b>${name}</b><br><br>Path: AVRON:\\${name}<br>Preview object count: ${rows.length}`;
+}
+
+function showDetail(r){
+  $("detail").innerHTML=`<table>
+  <tr><td>Name</td><td>${r[0]}</td></tr>
+  <tr><td>Type</td><td>${r[1]}</td></tr>
+  <tr><td>Size</td><td>${r[2]}</td></tr>
+  <tr><td>Security</td><td>${r[3]}</td></tr>
+  <tr><td>Status</td><td>${r[4]}</td></tr>
+  <tr><td>AI Access</td><td>${currentFolder==="Avron Systems"?"Denied by default":"Context-dependent"}</td></tr>
+  <tr><td>Reversible</td><td>Preview only</td></tr>
+  </table>`;
+}
+
+$("cyrusBtn").onclick=()=>$("cyrus").classList.remove("hidden");
+$("closeCyrus").onclick=()=>$("cyrus").classList.add("hidden");
+$("plusBtn").onclick=()=>{
+  const d=document.createElement("div");
+  d.className="msg";
+  d.textContent="Attachment menu preview: Photos • Camera • Files • Avron • Audio • Link • Plugins";
+  $("msgs").appendChild(d);
+};
+$("sendBtn").onclick=sendCyrus;
+$("ask").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendCyrus();}});
+
+function sendCyrus(){
+  const text=$("ask").value.trim();
+  if(!text)return;
+  const user=document.createElement("div");
+  user.className="msg";user.textContent=text;$("msgs").appendChild(user);
+  $("ask").value="";
+  setTimeout(()=>{
+    const bot=document.createElement("div");
+    bot.className="msg";
+    bot.textContent="Cyrus preview: I can explain, search, organize, prepare commands, and demonstrate live-edit concepts here. Production tool actions remain firewall-controlled.";
+    $("msgs").appendChild(bot);
+    $("msgs").scrollTop=$("msgs").scrollHeight;
+  },450);
+}
+
+$("qt").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const v=$("qt").value.trim();$("qt").value="";
+  if(!v)return;
+  if(v==="T"||v.toLowerCase()==="terminate"){
+    $("app").classList.add("hidden");
+    $("quickTerm").classList.add("hidden");
+    $("cyrus").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    $("pin").value="";$("challengeInput").value="";
+    $("termOut").innerHTML="";stage=0;
+  }else if(v.toLowerCase()==="cyrus"){
+    $("cyrus").classList.remove("hidden");
+  }else if(v.toLowerCase()==="status"){
+    alert("AVRON PREVIEW STATUS\nDB: PREVIEW\nCYRUS: DEMO\nFIREWALL: ACTIVE\nOWNER SESSION: ACTIVE");
+  }else if(v.toLowerCase()==="diagnostics"){
+    alert("Preview diagnostics: nominal.\nProduction diagnostics are not connected in this public build.");
+  }else if(v==="LogoutAll"){
+    alert("Preview only: LogoutAll requires typed confirmation and server-side session revocation in production.");
+  }else{
+    alert("Preview shell: command accepted for demonstration only.");
+  }
+});
+</script>
+</body>
+</html>
