@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Avron Tracking</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+
+#gate{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+.gate-card{
+  width:min(420px,100%);
+  border:1px solid #2b2b2b;
+  padding:28px;
+  background:#000;
+}
+.brand{
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.18em;
+  margin-bottom:28px;
+}
+.gate-card h1{
+  margin:0 0 8px;
+  font-size:34px;
+  letter-spacing:-.04em;
+}
+.gate-card p{
+  margin:0 0 24px;
+  color:#9a9a9a;
+  line-height:1.55;
+  font-size:13px;
+}
+label{
+  display:block;
+  margin-bottom:7px;
+  color:#8b8b8b;
+  font-size:10px;
+  letter-spacing:.12em;
+  font-weight:700;
+}
+input,select{
+  width:100%;
+  color:#fff;
+  background:#000;
+  border:1px solid #3b3b3b;
+  outline:none;
+  padding:13px 14px;
+  border-radius:0;
+}
+input:focus,select:focus{border-color:#fff}
+.primary{
+  width:100%;
+  margin-top:9px;
+  padding:13px 14px;
+  border:1px solid #fff;
+  color:#000;
+  background:#fff;
+  font-weight:800;
+}
+.primary:hover{background:#dedede}
+.error{
+  min-height:18px;
+  margin-top:8px;
+  color:#ff8d8d;
+  font-size:11px;
+}
+
+#app{min-height:100vh}
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 24px;
+  border-bottom:1px solid #252525;
+}
+.logo{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.16em;
+}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.link-btn{
+  padding:0;
+  border:0;
+  background:none;
+  color:#a7a7a7;
+  font-size:11px;
+}
+.link-btn:hover{color:#fff}
+.owner-active{color:#fff;font-weight:800}
+
+main{
+  width:min(880px,calc(100% - 32px));
+  margin:0 auto;
+  padding:64px 0 40px;
+}
+.hero{
+  margin-bottom:30px;
+}
+.hero h2{
+  margin:0 0 12px;
+  font-size:clamp(42px,8vw,78px);
+  line-height:.95;
+  letter-spacing:-.06em;
+}
+.hero p{
+  max-width:680px;
+  margin:0;
+  color:#8f8f8f;
+  line-height:1.65;
+  font-size:13px;
+}
+
+.search-box{
+  border-top:1px solid #2b2b2b;
+  border-bottom:1px solid #2b2b2b;
+  padding:18px 0;
+}
+.search-grid{
+  display:grid;
+  grid-template-columns:160px 1fr 110px;
+  gap:8px;
+}
+.search-grid button{
+  border:1px solid #fff;
+  background:#fff;
+  color:#000;
+  font-weight:800;
+}
+.small-note{
+  margin-top:10px;
+  color:#6f6f6f;
+  font-size:10px;
+  line-height:1.55;
+}
+
+#loading{
+  margin-top:24px;
+  border-top:1px solid #202020;
+  border-bottom:1px solid #202020;
+  padding:18px 0;
+}
+.loading-line{
+  font-size:11px;
+  color:#8b8b8b;
+  line-height:1.9;
+}
+.loading-line strong{color:#fff}
+
+.results{
+  margin-top:30px;
+}
+.results-top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.results-top h3{
+  margin:0;
+  font-size:28px;
+  letter-spacing:-.04em;
+  word-break:break-word;
+}
+.copy-btn{
+  border:1px solid #fff;
+  background:#000;
+  color:#fff;
+  padding:9px 11px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.copy-btn:hover{background:#fff;color:#000}
+
+.report{
+  border-top:1px solid #383838;
+}
+.row{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:16px;
+  padding:14px 0;
+  border-bottom:1px solid #232323;
+}
+.row .k{
+  color:#7d7d7d;
+  font-size:10px;
+  letter-spacing:.08em;
+  font-weight:800;
+}
+.row .v{
+  color:#fff;
+  font-size:13px;
+  line-height:1.45;
+  word-break:break-word;
+}
+.status-public{color:#cfcfcf}
+.status-pending{color:#8a8a8a}
+.status-locked{color:#777}
+
+.results-note{
+  margin-top:18px;
+  color:#6d6d6d;
+  font-size:10px;
+  line-height:1.65;
+}
+.owner-strip{
+  margin-top:18px;
+  border:1px solid #444;
+  padding:12px 14px;
+  font-size:11px;
+  color:#d4d4d4;
+}
+footer{
+  width:min(880px,calc(100% - 32px));
+  margin:0 auto;
+  border-top:1px solid #1e1e1e;
+  padding:18px 0 28px;
+  color:#555;
+  font-size:9px;
+  letter-spacing:.09em;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+#ownerOverlay{
+  position:fixed;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:22px;
+  background:rgba(0,0,0,.88);
+  z-index:50;
+}
+.owner-card{
+  width:min(390px,100%);
+  border:1px solid #3a3a3a;
+  background:#000;
+  padding:24px;
+}
+.owner-card h3{
+  margin:0 0 8px;
+  font-size:24px;
+}
+.owner-card p{
+  margin:0 0 18px;
+  color:#8c8c8c;
+  font-size:12px;
+  line-height:1.55;
+}
+.owner-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:9px;
+}
+.owner-actions button{
+  padding:12px;
+}
+.cancel{
+  border:1px solid #3a3a3a;
+  background:#000;
+  color:#fff;
+}
+.auth{
+  border:1px solid #fff;
+  background:#fff;
+  color:#000;
+  font-weight:800;
+}
+
+@media(max-width:700px){
+  header{padding:16px}
+  main{padding-top:48px}
+  .search-grid{grid-template-columns:1fr}
+  .search-grid button{padding:13px}
+  .row{grid-template-columns:1fr;gap:6px}
+  .results-top{align-items:flex-start;flex-direction:column}
+  .copy-btn{width:100%}
+}
+</style>
+</head>
+<body>
+
+<section id="gate">
+  <div class="gate-card">
+    <div class="brand">AVRON TRACKING</div>
+    <h1>Access</h1>
+    <p>Enter the network PIN to open the tracking interface.</p>
+    <label for="sitePin">ACCESS PIN</label>
+    <input id="sitePin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="siteEnter" class="primary">ENTER</button>
+    <div id="siteError" class="error mono"></div>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="logo">AVRON TRACKING</div>
+    <div class="header-right">
+      <button id="ownerBtn" class="link-btn">Owner Mode</button>
+      <button id="exitBtn" class="link-btn">Exit</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Track what’s public.</h2>
+      <p>Enter a phone number, public social account, email address, or domain. Avron organizes public and authorized information into one clean report.</p>
+    </section>
+
+    <section class="search-box">
+      <div class="search-grid">
+        <select id="typeSelect" aria-label="Search type">
+          <option value="phone">Phone Number</option>
+          <option value="social">Social Account</option>
+          <option value="email">Email Address</option>
+          <option value="domain">Domain</option>
+        </select>
+        <input id="targetInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="+1 (555) 555-0123">
+        <button id="trackBtn">TRACK</button>
+      </div>
+      <div class="small-note">Names are shown only when a real public or authorized source verifies the association. Avron does not guess identities.</div>
+    </section>
+
+    <section id="loading" class="hidden">
+      <div id="loadingText" class="loading-line mono"></div>
+    </section>
+
+    <section id="results" class="results hidden">
+      <div class="results-top">
+        <div>
+          <div style="color:#777;font-size:10px;letter-spacing:.12em;font-weight:800;margin-bottom:6px">TRACKED TARGET</div>
+          <h3 id="resultTarget">—</h3>
+        </div>
+        <button id="copyBtn" class="copy-btn">COPY ALL</button>
+      </div>
+
+      <div id="report" class="report"></div>
+
+      <div id="ownerStrip" class="owner-strip hidden">
+        OWNER MODE ACTIVE — authorized account/device connectors can be added here without changing the public interface.
+      </div>
+
+      <div class="results-note">
+        This static single-file build can normalize and organize a target, but real names, carrier data, reputation data, public profile matches, DNS/WHOIS information, and authorized private data require live backend/provider connectors. Private passwords, secret GPS, or confidential carrier subscriber records are not obtainable from a public number lookup.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>AVRON TRACKING</span>
+    <span id="modeText">PUBLIC MODE</span>
+  </footer>
+</div>
+
+<div id="ownerOverlay" class="hidden">
+  <div class="owner-card">
+    <h3>Owner Mode</h3>
+    <p>Enter the owner PIN.</p>
+    <label for="ownerPin">OWNER PIN</label>
+    <input id="ownerPin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div id="ownerError" class="error mono"></div>
+    <div class="owner-actions">
+      <button id="ownerCancel" class="cancel">CANCEL</button>
+      <button id="ownerEnter" class="auth">ENTER</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const SITE_PIN_HASH = "44d463bb9fce052675233f16cc1ff21c85a3efebc414d33243d4ab6d07edc12a";
+const OWNER_PIN_HASH = "7186631c37bead6bcb4d400196d46b423a53d7f55cec0183f0a86045e0d65edf";
+
+let ownerMode = false;
+let lastReport = [];
+let lastTarget = "";
+
+async function sha256Hex(value){
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+async function enterSite(){
+  const pin = $("sitePin").value;
+  if(!pin){ $("siteError").textContent = "ENTER PIN"; return; }
+  const hash = await sha256Hex(pin);
+  if(hash !== SITE_PIN_HASH){
+    $("siteError").textContent = "ACCESS DENIED";
+    $("sitePin").value = "";
+    return;
+  }
+  $("siteError").textContent = "";
+  $("gate").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  sessionStorage.setItem("avron_tracking_access","1");
+  setTimeout(()=>$("targetInput").focus(),50);
+}
+
+$("siteEnter").onclick = enterSite;
+$("sitePin").addEventListener("keydown",e=>{if(e.key==="Enter")enterSite()});
+
+if(sessionStorage.getItem("avron_tracking_access")==="1"){
+  $("gate").classList.add("hidden");
+  $("app").classList.remove("hidden");
+}
+
+$("exitBtn").onclick = ()=>{
+  sessionStorage.removeItem("avron_tracking_access");
+  ownerMode = false;
+  $("app").classList.add("hidden");
+  $("gate").classList.remove("hidden");
+  $("results").classList.add("hidden");
+  $("sitePin").value = "";
+};
+
+$("ownerBtn").onclick = ()=>{
+  if(ownerMode){
+    ownerMode = false;
+    applyOwnerMode();
+    return;
+  }
+  $("ownerOverlay").classList.remove("hidden");
+  $("ownerPin").value = "";
+  $("ownerError").textContent = "";
+  setTimeout(()=>$("ownerPin").focus(),50);
+};
+
+$("ownerCancel").onclick = ()=>$("ownerOverlay").classList.add("hidden");
+
+async function enterOwner(){
+  const pin = $("ownerPin").value;
+  if(!pin){ $("ownerError").textContent="ENTER OWNER PIN"; return; }
+  const hash = await sha256Hex(pin);
+  if(hash !== OWNER_PIN_HASH){
+    $("ownerError").textContent="OWNER ACCESS DENIED";
+    $("ownerPin").value="";
+    return;
+  }
+  ownerMode = true;
+  $("ownerOverlay").classList.add("hidden");
+  applyOwnerMode();
+}
+
+$("ownerEnter").onclick = enterOwner;
+$("ownerPin").addEventListener("keydown",e=>{if(e.key==="Enter")enterOwner()});
+
+function applyOwnerMode(){
+  $("ownerBtn").textContent = ownerMode ? "Exit Owner" : "Owner Mode";
+  $("ownerBtn").classList.toggle("owner-active", ownerMode);
+  $("modeText").textContent = ownerMode ? "OWNER MODE" : "PUBLIC MODE";
+  $("ownerStrip").classList.toggle("hidden", !ownerMode || !lastTarget);
+}
+
+$("typeSelect").onchange = ()=>{
+  const p = {
+    phone:"+1 (555) 555-0123",
+    social:"@username",
+    email:"name@example.com",
+    domain:"example.com"
+  };
+  $("targetInput").placeholder = p[$("typeSelect").value];
+};
+
+$("trackBtn").onclick = track;
+$("targetInput").addEventListener("keydown",e=>{if(e.key==="Enter")track()});
+
+function normalizePhone(raw){
+  const digits = raw.replace(/\D/g,"");
+  let normalized = raw;
+  if(digits.length===10) normalized = "+1 " + digits.slice(0,3) + "-" + digits.slice(3,6) + "-" + digits.slice(6);
+  else if(digits.length===11 && digits.startsWith("1")) normalized = "+1 " + digits.slice(1,4) + "-" + digits.slice(4,7) + "-" + digits.slice(7);
+  return {digits,normalized};
+}
+
+function phoneReport(raw){
+  const p = normalizePhone(raw);
+  const local10 = p.digits.length>=10 ? p.digits.slice(-10) : "";
+  const area = local10 ? local10.slice(0,3) : "Unknown";
+  const exchange = local10 ? local10.slice(3,6) : "Unknown";
+  const nanp = p.digits.length===10 || (p.digits.length===11 && p.digits.startsWith("1"));
+
+  return [
+    ["Target", raw],
+    ["Normalized number", p.normalized],
+    ["Verified public name", "No verified name in local preview — live public-source connector required"],
+    ["Country / numbering plan", nanp ? "United States / Canada NANP (+1)" : "Provider lookup required"],
+    ["Area code", area],
+    ["Exchange", exchange],
+    ["Line type", "Live telecom provider required"],
+    ["Current carrier", "Live telecom provider required"],
+    ["Number portability", "Live telecom provider required"],
+    ["Public business name", "Public web/business search required"],
+    ["Public social matches", "Public-source search required"],
+    ["Spam / scam reports", "Reputation provider required"],
+    ["Public web mentions", "Public-source search required"],
+    ["Live GPS", "Not available from a phone-number lookup"],
+    ["Private subscriber record", "Authorized source required"],
+    ["Owner mode", ownerMode ? "Active" : "Off"]
+  ];
+}
+
+function socialReport(raw){
+  const username = raw.replace(/^@/,"").trim();
+  return [
+    ["Target", raw],
+    ["Username", username ? "@"+username : raw],
+    ["Verified public name", "Public profile/source connector required"],
+    ["Public display name", "Public profile connector required"],
+    ["Public bio", "Public profile connector required"],
+    ["Public profile links", "Public-source search required"],
+    ["Username reuse", "Public-source search required"],
+    ["Public website links", "Public-source search required"],
+    ["Public location claim", "Shown only when the user made it public"],
+    ["Private account data", "Account-holder authorization required"],
+    ["Owner mode", ownerMode ? "Active" : "Off"]
+  ];
+}
+
+function emailReport(raw){
+  const parts = raw.split("@");
+  const domain = parts.length===2 ? parts[1].toLowerCase() : "Invalid / unknown";
+  return [
+    ["Target", raw],
+    ["Verified public name", "Public-source connector required"],
+    ["Email domain", domain],
+    ["Provider / organization", "Domain/provider lookup required"],
+    ["Public business association", "Public-source search required"],
+    ["Public web mentions", "Public-source search required"],
+    ["Exposure / reputation", "Approved reputation provider required"],
+    ["Private inbox data", "Account-holder authorization required"],
+    ["Owner mode", ownerMode ? "Active" : "Off"]
+  ];
+}
+
+function domainReport(raw){
+  const host = raw.replace(/^https?:\/\//i,"").replace(/^www\./i,"").split("/")[0].toLowerCase();
+  return [
+    ["Target", host || raw],
+    ["Organization / public name", "Public WHOIS / business source required"],
+    ["DNS records", "DNS provider required"],
+    ["Registration data", "Public WHOIS source required"],
+    ["Registrar", "Public WHOIS source required"],
+    ["Public contact information", "Shown only when publicly published"],
+    ["Threat reputation", "Reputation provider required"],
+    ["Public web mentions", "Public-source search required"],
+    ["Owner mode", ownerMode ? "Active" : "Off"]
+  ];
+}
+
+async function track(){
+  const raw = $("targetInput").value.trim();
+  if(!raw) return;
+
+  $("results").classList.add("hidden");
+  $("loading").classList.remove("hidden");
+  $("loadingText").innerHTML = "";
+
+  const steps = [
+    "Normalizing target",
+    "Classifying search",
+    "Checking locally available metadata",
+    "Preparing public-source fields",
+    "Building report"
+  ];
+
+  for(const step of steps){
+    const div = document.createElement("div");
+    div.innerHTML = step + ' ... <strong>OK</strong>';
+    $("loadingText").appendChild(div);
+    await new Promise(r=>setTimeout(r,140));
+  }
+
+  const type = $("typeSelect").value;
+  let report = [];
+  if(type==="phone") report = phoneReport(raw);
+  if(type==="social") report = socialReport(raw);
+  if(type==="email") report = emailReport(raw);
+  if(type==="domain") report = domainReport(raw);
+
+  lastTarget = raw;
+  lastReport = report;
+  renderReport();
+  $("loading").classList.add("hidden");
+  $("results").classList.remove("hidden");
+}
+
+function esc(v){
+  return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+function renderReport(){
+  $("resultTarget").textContent = lastTarget;
+  $("report").innerHTML = lastReport.map(([k,v])=>`
+    <div class="row">
+      <div class="k mono">${esc(k.toUpperCase())}</div>
+      <div class="v">${esc(v)}</div>
+    </div>
+  `).join("");
+  $("ownerStrip").classList.toggle("hidden", !ownerMode);
+}
+
+$("copyBtn").onclick = async ()=>{
+  if(!lastReport.length) return;
+
+  const type = $("typeSelect").value.toUpperCase();
+  const text = [
+    "AVRON TRACKING",
+    "TYPE: " + type,
+    "TARGET: " + lastTarget,
+    "MODE: " + (ownerMode ? "OWNER" : "PUBLIC"),
+    "",
+    ...lastReport.map(([k,v])=>k.toUpperCase()+": "+v)
+  ].join("\n");
+
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position="fixed";
+    ta.style.opacity="0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+
+  const old = $("copyBtn").textContent;
+  $("copyBtn").textContent = "COPIED";
+  setTimeout(()=>$("copyBtn").textContent=old,1200);
+};
+</script>
+</body>
+</html>
